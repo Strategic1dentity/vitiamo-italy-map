@@ -9,19 +9,22 @@
     html,
     body {
       margin: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
       /* Use transparent if your Wix block background is already #313030 */
       background: #313030;
       color: #e8e4df;
     }
-    .square-root {
+    /* Fills Wix HTML embed / iframe (e.g. 1015×505); no document scrollbars */
+    .embed-root {
       position: relative;
       width: 100%;
-      max-width: 100%;
-      margin: 0 auto;
-      aspect-ratio: 1 / 1;
+      height: 100%;
+      min-height: 0;
       background: #313030;
     }
-    .square-frame {
+    .map-frame {
       position: absolute;
       inset: 0;
       overflow: hidden;
@@ -102,6 +105,8 @@
       width: min(calc(100% - 16px), 300px);
       max-height: min(48%, 320px);
       overflow-y: auto;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
       z-index: 5;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       background: rgba(49, 48, 48, 0.94);
@@ -109,6 +114,9 @@
       padding: 12px 14px;
       border: 1px solid #a28e65;
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
+    }
+    .detail-card::-webkit-scrollbar {
+      display: none;
     }
     .detail-card h2 {
       margin: 0 0 8px;
@@ -161,30 +169,37 @@
     }
     #credit {
       position: absolute;
-      top: 6px;
-      right: 8px;
+      right: 4px;
+      bottom: 2px;
       left: auto;
-      bottom: auto;
-      max-width: min(52%, 220px);
+      top: auto;
       margin: 0;
-      font-size: 9px;
+      padding: 0;
+      max-width: 45%;
+      font-size: 6px;
+      line-height: 1.2;
       font-family: system-ui, sans-serif;
-      color: #6e6a64;
-      line-height: 1.35;
+      color: rgba(162, 142, 101, 0.55);
       text-align: right;
-      z-index: 4;
+      z-index: 3;
       pointer-events: auto;
     }
     #credit a {
+      color: inherit;
+      text-decoration: underline;
+      text-underline-offset: 1px;
+    }
+    #credit a:hover {
       color: #a28e65;
     }
   </style>
 </head>
 <body>
-  <div class="square-root">
+  <!-- Full attribution: administrative boundaries © ISTAT, via openpolis/geojson-italy (CC-BY). -->
+  <div class="embed-root">
     <div class="status" id="status">Loading map…</div>
-    <div class="square-frame" id="square-frame">
-      <svg id="map" role="img" aria-label="Interactive map of Italian regions"></svg>
+    <div class="map-frame" id="map-frame">
+      <svg id="map" role="img" aria-label="Interactive map of Italian regions" preserveAspectRatio="xMidYMid meet"></svg>
       <aside class="detail-card" id="detail" aria-live="polite">
         <h2 id="detail-title">Select a region</h2>
         <img id="detail-img" class="detail-img" alt="" width="400" height="300" />
@@ -193,12 +208,11 @@
         </p>
         <div class="detail-actions" id="detail-actions"></div>
       </aside>
+      <p id="credit">
+        <a href="https://github.com/openpolis/geojson-italy" target="_blank" rel="noopener">ISTAT · OpenPolis</a>
+        · CC-BY
+      </p>
     </div>
-    <p id="credit">
-      Boundaries: ISTAT via
-      <a href="https://github.com/openpolis/geojson-italy" target="_blank" rel="noopener">openpolis/geojson-italy</a>
-      (CC-BY).
-    </p>
   </div>
 
   <div id="tip" aria-hidden="true">
@@ -295,7 +309,7 @@
       var TOPO_URL =
         "https://raw.githubusercontent.com/openpolis/geojson-italy/master/topojson/limits_IT_regions.topo.json";
 
-      var squareFrame = document.getElementById("square-frame");
+      var mapFrame = document.getElementById("map-frame");
       var statusEl = document.getElementById("status");
       var tipEl = document.getElementById("tip");
       var tipName = document.getElementById("tip-name");
@@ -396,18 +410,22 @@
         });
       }
 
-      function squareSize() {
-        var w = squareFrame.clientWidth;
-        var h = squareFrame.clientHeight;
-        var s = Math.floor(Math.min(w, h) || w || 320);
-        return Math.max(120, s);
+      function frameSize() {
+        var w = mapFrame.clientWidth;
+        var h = mapFrame.clientHeight;
+        w = Math.max(1, Math.floor(w || 320));
+        h = Math.max(1, Math.floor(h || 200));
+        return { w: w, h: h };
       }
 
       function layoutMap() {
         if (!regionsGeo) return;
-        var S = squareSize();
-        projection.fitSize([S, S], regionsGeo);
-        svg.attr("viewBox", "0 0 " + S + " " + S).attr("width", S).attr("height", S);
+        var sz = frameSize();
+        projection.fitSize([sz.w, sz.h], regionsGeo);
+        svg
+          .attr("viewBox", "0 0 " + sz.w + " " + sz.h)
+          .attr("width", "100%")
+          .attr("height", "100%");
         svg.selectAll("path.region").attr("d", geoPath);
       }
 
@@ -477,7 +495,7 @@
           layoutMap();
 
           if (typeof ResizeObserver !== "undefined") {
-            new ResizeObserver(scheduleLayout).observe(squareFrame);
+            new ResizeObserver(scheduleLayout).observe(mapFrame);
           }
           window.addEventListener("resize", scheduleLayout);
 
