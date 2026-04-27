@@ -104,9 +104,7 @@
       top: auto;
       width: min(calc(100% - 16px), 300px);
       max-height: min(48%, 320px);
-      overflow-y: auto;
-      scrollbar-width: none;
-      -ms-overflow-style: none;
+      overflow: hidden;
       z-index: 5;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
       background: rgba(49, 48, 48, 0.94);
@@ -114,9 +112,6 @@
       padding: 12px 14px;
       border: 1px solid #a28e65;
       box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
-    }
-    .detail-card::-webkit-scrollbar {
-      display: none;
     }
     .detail-card h2 {
       margin: 0 0 8px;
@@ -126,12 +121,13 @@
     }
     .detail-card .detail-img {
       width: 100%;
-      aspect-ratio: 4 / 3;
+      aspect-ratio: 3 / 4;
       object-fit: cover;
       border-radius: 6px;
       margin-bottom: 8px;
       background: #3a3836;
       display: none;
+      max-height: clamp(120px, 24vh, 220px);
     }
     .detail-card .detail-img.is-visible {
       display: block;
@@ -141,6 +137,10 @@
       font-size: 0.8rem;
       line-height: 1.45;
       color: #c9c4bc;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 4;
+      overflow: hidden;
     }
     .detail-card .detail-actions {
       display: flex;
