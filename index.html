@@ -6,82 +6,65 @@
   <title>Vitiamo — Italian wine regions</title>
   <style>
     * { box-sizing: border-box; }
+    html,
     body {
       margin: 0;
-      font-family: "Georgia", "Times New Roman", serif;
-      background: #faf8f5;
-      color: #2a2420;
+      /* Use transparent if your Wix block background is already #313030 */
+      background: #313030;
+      color: #e8e4df;
     }
-    .layout {
-      max-width: 1100px;
-      margin: 0 auto;
-      padding: 16px;
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 20px;
-    }
-    .layout > header {
-      grid-column: 1 / -1;
-    }
-    @media (min-width: 840px) {
-      .layout {
-        grid-template-columns: minmax(280px, 1fr) 320px;
-        align-items: start;
-      }
-    }
-    header h1 {
-      font-size: 1.35rem;
-      font-weight: 600;
-      margin: 0 0 6px;
-      letter-spacing: 0.02em;
-      color: #4a1f28;
-    }
-    header p.lead {
-      margin: 0;
-      font-size: 0.95rem;
-      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      color: #5c534c;
-      line-height: 1.45;
-    }
-    #status {
-      font-family: system-ui, sans-serif;
-      font-size: 0.9rem;
-      color: #666;
-      margin-bottom: 8px;
-    }
-    .map-wrap {
+    .square-root {
       position: relative;
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      aspect-ratio: 1 / 1;
+      background: #313030;
+    }
+    .square-frame {
+      position: absolute;
+      inset: 0;
+      overflow: hidden;
     }
     #map {
       display: block;
       width: 100%;
-      height: auto;
-      background: linear-gradient(180deg, #eef4f6 0%, #e4ecf0 100%);
-      border-radius: 10px;
-      box-shadow: 0 2px 12px rgba(40, 20, 30, 0.08);
+      height: 100%;
+      background: #313030;
     }
     .region {
-      stroke: #fff;
-      stroke-width: 0.55;
+      stroke: #a28e65;
+      stroke-width: 0.65;
       cursor: pointer;
-      transition: fill 0.14s ease, opacity 0.14s ease;
+      transition: fill 0.14s ease, opacity 0.14s ease, stroke 0.14s ease;
     }
     .region--stock {
-      fill: #c5dde6;
+      fill: #4b4437;
     }
     .region--stock:hover,
     .region--stock.is-selected {
-      fill: #722f37;
+      fill: #5e5649;
     }
     .region--other {
-      fill: #d8d4d0;
+      fill: #313030;
     }
     .region--other:hover,
     .region--other.is-selected {
-      fill: #9a8f88;
+      fill: #3a3836;
     }
     .region.is-dimmed {
-      opacity: 0.45;
+      opacity: 0.42;
+    }
+    .status {
+      position: absolute;
+      top: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 6;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      color: #a8a090;
+      pointer-events: none;
     }
     #tip {
       position: fixed;
@@ -89,13 +72,13 @@
       pointer-events: none;
       padding: 8px 12px;
       max-width: 260px;
-      background: rgba(35, 28, 30, 0.94);
-      color: #faf8f5;
+      background: rgba(22, 21, 21, 0.95);
+      color: #f2efe8;
       font-family: system-ui, sans-serif;
       font-size: 12px;
       line-height: 1.35;
       border-radius: 6px;
-      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      border: 1px solid #a28e65;
       opacity: 0;
       transition: opacity 0.06s;
     }
@@ -111,104 +94,110 @@
       font-size: 11px;
     }
     .detail-card {
+      position: absolute;
+      left: 8px;
+      bottom: 8px;
+      right: auto;
+      top: auto;
+      width: min(calc(100% - 16px), 300px);
+      max-height: min(48%, 320px);
+      overflow-y: auto;
+      z-index: 5;
       font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-      background: #fff;
-      border-radius: 10px;
-      padding: 18px;
-      box-shadow: 0 2px 12px rgba(40, 20, 30, 0.07);
-      border: 1px solid rgba(114, 47, 55, 0.12);
-      min-height: 200px;
+      background: rgba(49, 48, 48, 0.94);
+      border-radius: 8px;
+      padding: 12px 14px;
+      border: 1px solid #a28e65;
+      box-shadow: 0 6px 24px rgba(0, 0, 0, 0.35);
     }
     .detail-card h2 {
-      margin: 0 0 10px;
-      font-size: 1.15rem;
-      color: #4a1f28;
+      margin: 0 0 8px;
+      font-size: 1rem;
+      color: #f2efe8;
+      line-height: 1.25;
     }
     .detail-card .detail-img {
       width: 100%;
       aspect-ratio: 4 / 3;
       object-fit: cover;
-      border-radius: 8px;
-      margin-bottom: 12px;
-      background: #eee6e0;
+      border-radius: 6px;
+      margin-bottom: 8px;
+      background: #3a3836;
       display: none;
     }
     .detail-card .detail-img.is-visible {
       display: block;
     }
     .detail-card p.desc {
-      margin: 0 0 14px;
-      font-size: 0.9rem;
-      line-height: 1.5;
-      color: #454039;
+      margin: 0 0 10px;
+      font-size: 0.8rem;
+      line-height: 1.45;
+      color: #c9c4bc;
     }
     .detail-card .detail-actions {
       display: flex;
       flex-wrap: wrap;
-      gap: 8px;
+      gap: 6px;
     }
     .detail-card a.btn-shop {
       display: inline-block;
-      padding: 10px 16px;
-      background: #722f37;
-      color: #fff !important;
+      padding: 8px 12px;
+      background: #a28e65;
+      color: #1a1918 !important;
       text-decoration: none;
-      font-size: 0.88rem;
+      font-size: 0.8rem;
       font-weight: 600;
-      border-radius: 6px;
-      transition: background 0.15s;
+      border-radius: 5px;
+      transition: background 0.15s, color 0.15s;
     }
     .detail-card a.btn-shop:hover {
-      background: #5c262d;
+      background: #b8a67a;
+      color: #0f0f0f !important;
     }
     .detail-card .placeholder {
-      font-size: 0.9rem;
-      color: #6a625a;
-      line-height: 1.5;
-    }
-    #credit {
-      grid-column: 1 / -1;
-      margin: 8px 0 0;
-      font-size: 11px;
-      font-family: system-ui, sans-serif;
-      color: #7a726a;
+      font-size: 0.8rem;
+      color: #9a958c;
       line-height: 1.45;
     }
+    #credit {
+      position: absolute;
+      top: 6px;
+      right: 8px;
+      left: auto;
+      bottom: auto;
+      max-width: min(52%, 220px);
+      margin: 0;
+      font-size: 9px;
+      font-family: system-ui, sans-serif;
+      color: #6e6a64;
+      line-height: 1.35;
+      text-align: right;
+      z-index: 4;
+      pointer-events: auto;
+    }
     #credit a {
-      color: #722f37;
+      color: #a28e65;
     }
   </style>
 </head>
 <body>
-  <div class="layout">
-    <header>
-      <h1>Discover Italy by region</h1>
-      <p class="lead">
-        Explore Italy’s wine regions below. Hover for a quick preview; the panel shows more detail.
-        Regions we currently stock link straight to our shop.
-      </p>
-    </header>
-
-    <div class="map-col">
-      <div id="status">Loading map…</div>
-      <div class="map-wrap">
-        <svg id="map" viewBox="0 0 900 1000" role="img" aria-label="Interactive map of Italian regions"></svg>
-      </div>
+  <div class="square-root">
+    <div class="status" id="status">Loading map…</div>
+    <div class="square-frame" id="square-frame">
+      <svg id="map" role="img" aria-label="Interactive map of Italian regions"></svg>
+      <aside class="detail-card" id="detail" aria-live="polite">
+        <h2 id="detail-title">Select a region</h2>
+        <img id="detail-img" class="detail-img" alt="" width="400" height="300" />
+        <p class="desc placeholder" id="detail-desc">
+          Hover the map for a preview. Click a region to keep it selected.
+        </p>
+        <div class="detail-actions" id="detail-actions"></div>
+      </aside>
     </div>
-
-    <aside class="detail-card" id="detail" aria-live="polite">
-      <h2 id="detail-title">Select a region</h2>
-      <img id="detail-img" class="detail-img" alt="" width="400" height="300" />
-      <p class="desc placeholder" id="detail-desc">
-        Move your pointer over the map to see each region’s name and notes. Click a region to keep it selected.
-      </p>
-      <div class="detail-actions" id="detail-actions"></div>
-    </aside>
-
     <p id="credit">
-      Administrative boundaries: ISTAT via
+      Boundaries: ISTAT via
       <a href="https://github.com/openpolis/geojson-italy" target="_blank" rel="noopener">openpolis/geojson-italy</a>
-      (CC-BY). Simplified TopoJSON.
+      (CC-BY).
     </p>
   </div>
 
@@ -223,11 +212,6 @@
     (function () {
       var SHOP_BASE = "https://www.vitiamo.co.uk/category/all-wines";
 
-      /**
-       * Keys MUST match `reg_name` from openpolis limits_IT_regions (Italian official names).
-       * `shopRegion` is the exact value for ?Region= on Vitiamo (as in your Wix collection).
-       * Add new rows when you list wines from more regions.
-       */
       var REGION_CONFIG = {
         Puglia: {
           shopRegion: "Apulia",
@@ -311,8 +295,7 @@
       var TOPO_URL =
         "https://raw.githubusercontent.com/openpolis/geojson-italy/master/topojson/limits_IT_regions.topo.json";
 
-      var width = 900;
-      var height = 1000;
+      var squareFrame = document.getElementById("square-frame");
       var statusEl = document.getElementById("status");
       var tipEl = document.getElementById("tip");
       var tipName = document.getElementById("tip-name");
@@ -323,6 +306,10 @@
       var detailActions = document.getElementById("detail-actions");
       var svg = d3.select("#map");
       var selectedFeature = null;
+      var regionsGeo = null;
+      var projection = d3.geoMercator();
+      var geoPath = d3.geoPath(projection);
+      var layoutScheduled = false;
 
       document.getElementById("detail").addEventListener("click", function (e) {
         e.stopPropagation();
@@ -358,7 +345,7 @@
         if (!d) {
           detailTitle.textContent = "Select a region";
           detailDesc.textContent =
-            "Move your pointer over the map to see each region’s name and notes. Click a region to keep it selected.";
+            "Hover the map for a preview. Click a region to keep it selected.";
           detailDesc.className = "desc placeholder";
           detailImg.classList.remove("is-visible");
           detailImg.removeAttribute("src");
@@ -409,31 +396,52 @@
         });
       }
 
+      function squareSize() {
+        var w = squareFrame.clientWidth;
+        var h = squareFrame.clientHeight;
+        var s = Math.floor(Math.min(w, h) || w || 320);
+        return Math.max(120, s);
+      }
+
+      function layoutMap() {
+        if (!regionsGeo) return;
+        var S = squareSize();
+        projection.fitSize([S, S], regionsGeo);
+        svg.attr("viewBox", "0 0 " + S + " " + S).attr("width", S).attr("height", S);
+        svg.selectAll("path.region").attr("d", geoPath);
+      }
+
+      function scheduleLayout() {
+        if (layoutScheduled) return;
+        layoutScheduled = true;
+        requestAnimationFrame(function () {
+          layoutScheduled = false;
+          layoutMap();
+        });
+      }
+
       fetch(TOPO_URL)
         .then(function (r) {
           if (!r.ok) throw new Error("HTTP " + r.status);
           return r.json();
         })
         .then(function (topology) {
-          var regions = topojson.feature(topology, topology.objects.regions);
-          var projection = d3.geoMercator().fitSize([width, height], regions);
-          var geoPath = d3.geoPath(projection);
+          regionsGeo = topojson.feature(topology, topology.objects.regions);
 
           svg
             .selectAll("path.region")
-            .data(regions.features)
+            .data(regionsGeo.features)
             .join("path")
             .attr("class", function (d) {
               return "region " + (getConfig(d) ? "region--stock" : "region--other");
             })
-            .attr("d", geoPath)
             .attr("data-reg", regionGeoName)
             .on("mouseenter", function (event, d) {
               var cfg = getConfig(d);
               var name = cfg ? cfg.title : regionGeoName(d);
               var sub = cfg
-                ? "Vitiamo listing available — click for details."
-                : "Browse other regions in our range.";
+                ? "Vitiamo listing available — see panel."
+                : "No shop listing for this region.";
               showTip(name, sub, event.clientX, event.clientY);
               renderDetail(d);
             })
@@ -441,8 +449,8 @@
               var cfg = getConfig(d);
               var name = cfg ? cfg.title : regionGeoName(d);
               var sub = cfg
-                ? "Vitiamo listing available — click for details."
-                : "Browse other regions in our range.";
+                ? "Vitiamo listing available — see panel."
+                : "No shop listing for this region.";
               showTip(name, sub, event.clientX, event.clientY);
             })
             .on("mouseleave", function () {
@@ -466,13 +474,18 @@
             renderDetail(null);
           });
 
+          layoutMap();
+
+          if (typeof ResizeObserver !== "undefined") {
+            new ResizeObserver(scheduleLayout).observe(squareFrame);
+          }
+          window.addEventListener("resize", scheduleLayout);
+
           statusEl.style.display = "none";
         })
         .catch(function (err) {
           statusEl.textContent =
-            "Could not load map data. Please try again later. (" +
-            (err && err.message ? err.message : "error") +
-            ")";
+            "Could not load map. (" + (err && err.message ? err.message : "error") + ")";
           console.error(err);
         });
     })();
