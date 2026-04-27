@@ -1,0 +1,481 @@
+<!DOCTYPE html>
+<html lang="en-GB">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Vitiamo — Italian wine regions</title>
+  <style>
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font-family: "Georgia", "Times New Roman", serif;
+      background: #faf8f5;
+      color: #2a2420;
+    }
+    .layout {
+      max-width: 1100px;
+      margin: 0 auto;
+      padding: 16px;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .layout > header {
+      grid-column: 1 / -1;
+    }
+    @media (min-width: 840px) {
+      .layout {
+        grid-template-columns: minmax(280px, 1fr) 320px;
+        align-items: start;
+      }
+    }
+    header h1 {
+      font-size: 1.35rem;
+      font-weight: 600;
+      margin: 0 0 6px;
+      letter-spacing: 0.02em;
+      color: #4a1f28;
+    }
+    header p.lead {
+      margin: 0;
+      font-size: 0.95rem;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      color: #5c534c;
+      line-height: 1.45;
+    }
+    #status {
+      font-family: system-ui, sans-serif;
+      font-size: 0.9rem;
+      color: #666;
+      margin-bottom: 8px;
+    }
+    .map-wrap {
+      position: relative;
+    }
+    #map {
+      display: block;
+      width: 100%;
+      height: auto;
+      background: linear-gradient(180deg, #eef4f6 0%, #e4ecf0 100%);
+      border-radius: 10px;
+      box-shadow: 0 2px 12px rgba(40, 20, 30, 0.08);
+    }
+    .region {
+      stroke: #fff;
+      stroke-width: 0.55;
+      cursor: pointer;
+      transition: fill 0.14s ease, opacity 0.14s ease;
+    }
+    .region--stock {
+      fill: #c5dde6;
+    }
+    .region--stock:hover,
+    .region--stock.is-selected {
+      fill: #722f37;
+    }
+    .region--other {
+      fill: #d8d4d0;
+    }
+    .region--other:hover,
+    .region--other.is-selected {
+      fill: #9a8f88;
+    }
+    .region.is-dimmed {
+      opacity: 0.45;
+    }
+    #tip {
+      position: fixed;
+      z-index: 100;
+      pointer-events: none;
+      padding: 8px 12px;
+      max-width: 260px;
+      background: rgba(35, 28, 30, 0.94);
+      color: #faf8f5;
+      font-family: system-ui, sans-serif;
+      font-size: 12px;
+      line-height: 1.35;
+      border-radius: 6px;
+      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.2);
+      opacity: 0;
+      transition: opacity 0.06s;
+    }
+    #tip .tip-name {
+      display: block;
+      font-weight: 600;
+      font-size: 13px;
+      margin-bottom: 2px;
+    }
+    #tip .tip-sub {
+      display: block;
+      opacity: 0.88;
+      font-size: 11px;
+    }
+    .detail-card {
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+      background: #fff;
+      border-radius: 10px;
+      padding: 18px;
+      box-shadow: 0 2px 12px rgba(40, 20, 30, 0.07);
+      border: 1px solid rgba(114, 47, 55, 0.12);
+      min-height: 200px;
+    }
+    .detail-card h2 {
+      margin: 0 0 10px;
+      font-size: 1.15rem;
+      color: #4a1f28;
+    }
+    .detail-card .detail-img {
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      border-radius: 8px;
+      margin-bottom: 12px;
+      background: #eee6e0;
+      display: none;
+    }
+    .detail-card .detail-img.is-visible {
+      display: block;
+    }
+    .detail-card p.desc {
+      margin: 0 0 14px;
+      font-size: 0.9rem;
+      line-height: 1.5;
+      color: #454039;
+    }
+    .detail-card .detail-actions {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+    }
+    .detail-card a.btn-shop {
+      display: inline-block;
+      padding: 10px 16px;
+      background: #722f37;
+      color: #fff !important;
+      text-decoration: none;
+      font-size: 0.88rem;
+      font-weight: 600;
+      border-radius: 6px;
+      transition: background 0.15s;
+    }
+    .detail-card a.btn-shop:hover {
+      background: #5c262d;
+    }
+    .detail-card .placeholder {
+      font-size: 0.9rem;
+      color: #6a625a;
+      line-height: 1.5;
+    }
+    #credit {
+      grid-column: 1 / -1;
+      margin: 8px 0 0;
+      font-size: 11px;
+      font-family: system-ui, sans-serif;
+      color: #7a726a;
+      line-height: 1.45;
+    }
+    #credit a {
+      color: #722f37;
+    }
+  </style>
+</head>
+<body>
+  <div class="layout">
+    <header>
+      <h1>Discover Italy by region</h1>
+      <p class="lead">
+        Explore Italy’s wine regions below. Hover for a quick preview; the panel shows more detail.
+        Regions we currently stock link straight to our shop.
+      </p>
+    </header>
+
+    <div class="map-col">
+      <div id="status">Loading map…</div>
+      <div class="map-wrap">
+        <svg id="map" viewBox="0 0 900 1000" role="img" aria-label="Interactive map of Italian regions"></svg>
+      </div>
+    </div>
+
+    <aside class="detail-card" id="detail" aria-live="polite">
+      <h2 id="detail-title">Select a region</h2>
+      <img id="detail-img" class="detail-img" alt="" width="400" height="300" />
+      <p class="desc placeholder" id="detail-desc">
+        Move your pointer over the map to see each region’s name and notes. Click a region to keep it selected.
+      </p>
+      <div class="detail-actions" id="detail-actions"></div>
+    </aside>
+
+    <p id="credit">
+      Administrative boundaries: ISTAT via
+      <a href="https://github.com/openpolis/geojson-italy" target="_blank" rel="noopener">openpolis/geojson-italy</a>
+      (CC-BY). Simplified TopoJSON.
+    </p>
+  </div>
+
+  <div id="tip" aria-hidden="true">
+    <span class="tip-name" id="tip-name"></span>
+    <span class="tip-sub" id="tip-sub"></span>
+  </div>
+
+  <script src="https://unpkg.com/d3@7"></script>
+  <script src="https://unpkg.com/topojson-client@3"></script>
+  <script>
+    (function () {
+      var SHOP_BASE = "https://www.vitiamo.co.uk/category/all-wines";
+
+      /**
+       * Keys MUST match `reg_name` from openpolis limits_IT_regions (Italian official names).
+       * `shopRegion` is the exact value for ?Region= on Vitiamo (as in your Wix collection).
+       * Add new rows when you list wines from more regions.
+       */
+      var REGION_CONFIG = {
+        Puglia: {
+          shopRegion: "Apulia",
+          title: "Apulia (Puglia)",
+          description:
+            "The heel of Italy: generous reds, crisp whites, and characterful rosés. Explore our curated Apulian selection.",
+          image: "",
+        },
+        Campania: {
+          shopRegion: "Campania",
+          title: "Campania",
+          description:
+            "From volcanic slopes to coastal hills—wines with nerve and fragrance. Discover Campania in our shop.",
+          image: "",
+        },
+        "Friuli-Venezia Giulia": {
+          shopRegion: "Friuli Venezia Giulia",
+          title: "Friuli Venezia Giulia",
+          description:
+            "Alpine freshness and Adriatic influence: precise whites and elegant reds. Browse Friuli wines.",
+          image: "",
+        },
+        Lombardia: {
+          shopRegion: "Lombardia",
+          title: "Lombardy",
+          description:
+            "From Alpine Nebbiolo to sparkling Franciacorta—Lombardy’s diversity in the bottle.",
+          image: "",
+        },
+        Marche: {
+          shopRegion: "Marche",
+          title: "Marche",
+          description:
+            "Verdicchio and coastal reds from Italy’s Adriatic heartland.",
+          image: "",
+        },
+        Piemonte: {
+          shopRegion: "Piemonte",
+          title: "Piedmont",
+          description:
+            "Barolo, Barbaresco, Barbera, and beyond—the benchmark region for Nebbiolo lovers.",
+          image: "",
+        },
+        Sicilia: {
+          shopRegion: "Sicilia",
+          title: "Sicily",
+          description:
+            "Sun-drenched island wines: Etna finesse to generous Nero d’Avola.",
+          image: "",
+        },
+        "Trentino-Alto Adige": {
+          shopRegion: "Trentino Alto Adige",
+          title: "Trentino-Alto Adige",
+          description:
+            "Alpine whites and structured reds from Italy’s northern frontier.",
+          image: "",
+        },
+        Toscana: {
+          shopRegion: "Toscana",
+          title: "Tuscany",
+          description:
+            "Chianti, Brunello, Super Tuscans, and coastal gems—Tuscany needs little introduction.",
+          image: "",
+        },
+        Umbria: {
+          shopRegion: "Umbria",
+          title: "Umbria",
+          description:
+            "The green heart of Italy—Sagrantino, Grechetto, and soulful countryside wines.",
+          image: "",
+        },
+        Veneto: {
+          shopRegion: "Veneto",
+          title: "Veneto",
+          description:
+            "Prosecco, Amarone, Soave, and Valpolicella: Veneto’s greatest hits.",
+          image: "",
+        },
+      };
+
+      var TOPO_URL =
+        "https://raw.githubusercontent.com/openpolis/geojson-italy/master/topojson/limits_IT_regions.topo.json";
+
+      var width = 900;
+      var height = 1000;
+      var statusEl = document.getElementById("status");
+      var tipEl = document.getElementById("tip");
+      var tipName = document.getElementById("tip-name");
+      var tipSub = document.getElementById("tip-sub");
+      var detailTitle = document.getElementById("detail-title");
+      var detailDesc = document.getElementById("detail-desc");
+      var detailImg = document.getElementById("detail-img");
+      var detailActions = document.getElementById("detail-actions");
+      var svg = d3.select("#map");
+      var selectedFeature = null;
+
+      document.getElementById("detail").addEventListener("click", function (e) {
+        e.stopPropagation();
+      });
+
+      function regionGeoName(d) {
+        return (d.properties && d.properties.reg_name) || "";
+      }
+
+      function getConfig(d) {
+        var name = regionGeoName(d);
+        return REGION_CONFIG[name] || null;
+      }
+
+      function shopUrl(shopRegion) {
+        return SHOP_BASE + "?Region=" + encodeURIComponent(shopRegion);
+      }
+
+      function showTip(name, sub, x, y) {
+        tipName.textContent = name;
+        tipSub.textContent = sub || "";
+        tipEl.style.left = Math.min(window.innerWidth - 270, x + 14) + "px";
+        tipEl.style.top = Math.min(window.innerHeight - 72, y + 14) + "px";
+        tipEl.style.opacity = "1";
+      }
+
+      function hideTip() {
+        tipEl.style.opacity = "0";
+      }
+
+      function renderDetail(d) {
+        detailActions.innerHTML = "";
+        if (!d) {
+          detailTitle.textContent = "Select a region";
+          detailDesc.textContent =
+            "Move your pointer over the map to see each region’s name and notes. Click a region to keep it selected.";
+          detailDesc.className = "desc placeholder";
+          detailImg.classList.remove("is-visible");
+          detailImg.removeAttribute("src");
+          detailImg.alt = "";
+          return;
+        }
+
+        var cfg = getConfig(d);
+        var geo = regionGeoName(d);
+
+        if (cfg) {
+          detailTitle.textContent = cfg.title;
+          detailDesc.textContent = cfg.description;
+          detailDesc.className = "desc";
+          if (cfg.image) {
+            detailImg.src = cfg.image;
+            detailImg.alt = cfg.title;
+            detailImg.classList.add("is-visible");
+          } else {
+            detailImg.classList.remove("is-visible");
+            detailImg.removeAttribute("src");
+            detailImg.alt = "";
+          }
+          var a = document.createElement("a");
+          a.className = "btn-shop";
+          a.href = shopUrl(cfg.shopRegion);
+          a.target = "_top";
+          a.rel = "noopener";
+          a.textContent = "Shop " + cfg.shopRegion + " wines";
+          detailActions.appendChild(a);
+        } else {
+          detailTitle.textContent = geo || "Region";
+          detailDesc.textContent =
+            "We do not currently list wines from this region online. Check back as our range grows—or contact us for special requests.";
+          detailDesc.className = "desc placeholder";
+          detailImg.classList.remove("is-visible");
+          detailImg.removeAttribute("src");
+          detailImg.alt = "";
+        }
+      }
+
+      function syncSelectionClasses() {
+        svg.selectAll("path.region").each(function (feat) {
+          var sel = selectedFeature === feat;
+          d3.select(this)
+            .classed("is-selected", sel)
+            .classed("is-dimmed", selectedFeature && !sel);
+        });
+      }
+
+      fetch(TOPO_URL)
+        .then(function (r) {
+          if (!r.ok) throw new Error("HTTP " + r.status);
+          return r.json();
+        })
+        .then(function (topology) {
+          var regions = topojson.feature(topology, topology.objects.regions);
+          var projection = d3.geoMercator().fitSize([width, height], regions);
+          var geoPath = d3.geoPath(projection);
+
+          svg
+            .selectAll("path.region")
+            .data(regions.features)
+            .join("path")
+            .attr("class", function (d) {
+              return "region " + (getConfig(d) ? "region--stock" : "region--other");
+            })
+            .attr("d", geoPath)
+            .attr("data-reg", regionGeoName)
+            .on("mouseenter", function (event, d) {
+              var cfg = getConfig(d);
+              var name = cfg ? cfg.title : regionGeoName(d);
+              var sub = cfg
+                ? "Vitiamo listing available — click for details."
+                : "Browse other regions in our range.";
+              showTip(name, sub, event.clientX, event.clientY);
+              renderDetail(d);
+            })
+            .on("mousemove", function (event, d) {
+              var cfg = getConfig(d);
+              var name = cfg ? cfg.title : regionGeoName(d);
+              var sub = cfg
+                ? "Vitiamo listing available — click for details."
+                : "Browse other regions in our range.";
+              showTip(name, sub, event.clientX, event.clientY);
+            })
+            .on("mouseleave", function () {
+              hideTip();
+              renderDetail(selectedFeature);
+            })
+            .on("click", function (event, d) {
+              event.stopPropagation();
+              if (selectedFeature === d) {
+                selectedFeature = null;
+              } else {
+                selectedFeature = d;
+              }
+              syncSelectionClasses();
+              renderDetail(selectedFeature);
+            });
+
+          document.addEventListener("click", function () {
+            selectedFeature = null;
+            syncSelectionClasses();
+            renderDetail(null);
+          });
+
+          statusEl.style.display = "none";
+        })
+        .catch(function (err) {
+          statusEl.textContent =
+            "Could not load map data. Please try again later. (" +
+            (err && err.message ? err.message : "error") +
+            ")";
+          console.error(err);
+        });
+    })();
+  </script>
+</body>
+</html>
