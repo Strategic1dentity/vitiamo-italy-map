@@ -282,6 +282,8 @@
           description:
             "Alpine whites and structured reds from Italy’s northern frontier.",
           image: "",
+          shopUrl:
+            "https://www.vitiamo.co.uk/category/all-wines?Region=Trentino%2520Alto%2520Adige",
         },
         Toscana: {
           shopRegion: "Toscana",
@@ -342,6 +344,10 @@
         return SHOP_BASE + "?Region=" + encodeURIComponent(shopRegion);
       }
 
+      function resolveShopUrl(cfg) {
+        return cfg.shopUrl || shopUrl(cfg.shopRegion);
+      }
+
       function showTip(name, sub, x, y) {
         tipName.textContent = name;
         tipSub.textContent = sub || "";
@@ -385,7 +391,7 @@
           }
           var a = document.createElement("a");
           a.className = "btn-shop";
-          a.href = shopUrl(cfg.shopRegion);
+          a.href = resolveShopUrl(cfg);
           a.target = "_top";
           a.rel = "noopener";
           a.textContent = "Shop " + cfg.shopRegion + " wines";
